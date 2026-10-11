@@ -1,4 +1,5 @@
 # NexusCore
+This GitHub is product docs. NexusCore is commercial. Source, images, and binaries ship after checkout on the [store](https://nexuscore-store.whop.site/). This tree is the README only.
 
 **Stop renting your stack. Self-hosted developer tools you own.**
 
@@ -37,7 +38,7 @@ NexusCore is that work as processes on **your** host.
 
 ## Quick start
 
-Licenses land as source + Docker images + binaries in your member files. Then:
+Licenses land as source + Docker images + binaries in your member files (example after checkout). Then:
 
 ```bash
 docker compose up -d
@@ -137,7 +138,7 @@ Launch code DEVLAUNCH is 20% off every license, including bundles.
 
 ## SaaS vs self-hosted
 ---
-| | Monthly Saas | Docker-only homegrown |
+| | Monthly Saas | NexusCore |
 |-|--------------|-----------------------|
 |Billing|EasyCron / Zapier / gateway invoices forever| Your time|
 |Data|Payloads, schedules, logs on their cloud| You own it, you maintain it|
@@ -192,7 +193,7 @@ Point your services at the proxy instead of the upstream. Set retry, rate limit,
 # FAQ
 ---
 ## Is this open source?
-Lifetime licenses include complete source. Checkout is on Whop. You run the code. We do not meter seats.
+No. Lifetime license, source after purchase, not FOSS, this repo is not the source tree. The license badge that reads lifetime + source will get read as an open-source license. Change it to license-commercial or drop it. There is no LICENSE file.
 
 ## Do I need a new VPS?
 No. Compose up on a laptop or a box you already run. Bind the UI to 127.0.0.1.
