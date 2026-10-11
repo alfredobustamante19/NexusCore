@@ -97,20 +97,7 @@ There is no account to create after checkout. Bind to localhost, back up ./data 
 ---
 
 # How it works
-
-  [stripe]──POST──┐
-  [github]──POST──┤
-  [timer ]──cron──┤
-                  ▼
-         ┌──────────────────┐
-         │ your VPS         │
-         │ FastAPI + SQLite │
-         │ telemetry = off  │
-         └────────┬─────────┘
-                  ▼
-     [your API / logs / Discord]
-     
-
+    
 1. Ingress — Stripe, GitHub, forms, or a cron tick. Plain HTTP into an endpoint you host.
 2. Your VPS — FastAPI + SQLite on Docker, or a single binary. Jobs, secrets, and payloads stay on disk you mount.
 3. Destinations you own — your API, Discord, a file. No vendor inbox sitting between the hops.
