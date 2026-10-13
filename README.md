@@ -2,7 +2,9 @@
 
 [English](https://github.com/alfredobustamante19/NexusCore/blob/main/README.md) · [Español](https://github.com/alfredobustamante19/NexusCore/blob/main/README.spanish.md) · [عربي](https://github.com/alfredobustamante19/NexusCore/blob/main/README.arabic.md) · [বাংলা](https://github.com/alfredobustamante19/NexusCore/blob/main/README.bengali.md) · [Français](https://github.com/alfredobustamante19/NexusCore/blob/main/README.french.md) · [हिंदी](https://github.com/alfredobustamante19/NexusCore/blob/main/README.hindi.md) · [Indonesia](https://github.com/alfredobustamante19/NexusCore/blob/main/README.indonesian.md) · [汉语](https://github.com/alfredobustamante19/NexusCore/blob/main/README.mandarin-chinese.md) · [Português](https://github.com/alfredobustamante19/NexusCore/blob/main/README.portuguese.md) · [русский](https://github.com/alfredobustamante19/NexusCore/blob/main/README.russian.md) · [اردو](https://github.com/alfredobustamante19/NexusCore/blob/main/README.urdu.md)
 
-This GitHub is product docs. NexusCore is commercial. Source, images, and binaries ship after checkout on the [store](https://nexuscore-store.whop.site). This tree is the README only.
+This GitHub is product docs. NexusCore is commercial. Source, images, and binaries ship after checkout on the [store](https://nexuscore-store.whop.site). 
+
+[Free demo sample](https://github.com/alfredobustamante19/NexusCore/blob/main/nexuscore_lite.py) 
 
 **Stop renting your stack. Self-hosted developer tools you own.**
 
