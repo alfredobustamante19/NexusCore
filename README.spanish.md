@@ -6,7 +6,9 @@
 
 > Idioma: **Español**
 
-Este GitHub es la documentación del producto. NexusCore es comercial. El código fuente, las imágenes y los binarios se entregan después del pago en la [tienda](https://nexuscore-store.whop.site). Este árbol contiene solo el README.
+Este GitHub es la documentación del producto. NexusCore es comercial. El código fuente, las imágenes y los binarios se entregan después del pago en la [tienda](https://nexuscore-store.whop.site).
+
+[Muestra gratuita](https://github.com/alfredobustamante19/NexusCore/blob/main/nexuscore_lite.py) 
 
 **Deja de alquilar tu stack. Herramientas de desarrollo autohospedadas que son tuyas.**
 
