@@ -42,7 +42,17 @@ NexusCore is that work as processes on **your** host.
 
 ## Quick start
 
-Do not clone this repo and expect a running stack. After checkout, licenses land as source, Docker images, and binaries in your member files. The snippets below are what you run then.
+### Demo Quick Launch
+Spin up the entire interactive 7-microservice suite in 10 seconds:
+```bash
+./start-demo.sh   # Linux / macOS
+.\Start-Demo.ps1 # Windows
+
+--------------------------------------------------------
+NexusCore Hub Running at http://localhost:8080
+⭐ If you find this stack useful, drop a star on this repository!
+--------------------------------------------------------
+```
 
 ### Example Compose (after checkout)
 
@@ -255,5 +265,8 @@ High-intent pages for people already searching for a way off hosted cron and web
 Use code `DEVLAUNCH` for 20% off.
 
 [Buy API Proxy](https://nexuscore-store.whop.site) · [Buy Ops Microservices ($199.99)](https://nexuscore-store.whop.site) · [Buy Complete Stack ($399.99)](https://nexuscore-store.whop.site)
+
+⭐ If you find this stack useful, drop a star on this repository and support this project!
+
 
 NexusCore is commercial self-hosted software. Licenses are lifetime, one-time, and include source. Run it on hardware you control.
