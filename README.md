@@ -6,6 +6,8 @@ This GitHub is product docs. NexusCore is commercial. Source, images, and binari
 
 [Free demo sample](https://github.com/alfredobustamante19/NexusCore/blob/main/nexuscore_lite.py) 
 
+![NexusCore Architecture & Dashboard](https://github.com/alfredobustamante19/NexusCore/blob/assets/preview-card.png)
+
 **Stop renting your stack. Self-hosted developer tools you own.**
 
 Cron, webhooks, pipelines, logs, env sync, and API retries on a VPS you already pay for. One lifetime license. Complete source after purchase. SQLite on disk. Telemetry off.
