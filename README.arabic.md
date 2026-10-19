@@ -43,7 +43,7 @@ NexusCore هو ذلك العمل كعمليات على مضيفك **أنت**.
 
 ## بدء سريع <a id="quick-start"></a>
 
-العرض المجاني في `NexusCore Developer Demo.zip` (`./start-demo.sh`، وعلى Windows `.\Start Demo.ps1`، ووحدة التحكم على http://127.0.0.1:7400). يستمع `nexuscore_lite.py` على http://127.0.0.1:8000 بعد `pip install -r requirements.txt`. يُسلَّم المصدر المرخّص بعد الدفع. المقتطفات أدناه هي ما تشغّله حينئذ.
+العرض المجاني في `NexusCore Developer Demo.zip`. افتح المجلد `NexusCore Developer Demo` (`./start-demo.sh`، وعلى Windows `.\Start Demo.ps1`، ووحدة التحكم على http://127.0.0.1:7400). يلزم Python 3.12 أو أحدث وNode.js 24 أو أحدث. يستمع `nexuscore_lite.py` على http://127.0.0.1:8000 بعد `pip install -r requirements.txt`. يُسلَّم المصدر المرخّص بعد الدفع. المقتطفات أدناه هي ما تشغّله حينئذ.
 
 ### مثال Compose (بعد الدفع)
 
@@ -119,7 +119,7 @@ npm start          # LogStream, http://127.0.0.1:8787. Set PORT if 8787 is alrea
 2. VPS الخاص بك: FastAPI + SQLite على Docker، أو عملية Node.js. المهام والأسرار والحمولات تبقى على القرص الذي تركّبه.
 3. وجهات تملكها: واجهة API لديك، أو Discord، أو ملف. لا صندوق وارد لبائع بين القفزات.
 
-توجيه webhooks يعمل على SQLite WAL، بأقل من 50 ميغابايت من الذاكرة، مع إعادات المحاولة وإعادة تشغيل dead-letter. يُبقي EnvSync مخزن مفتاح-قيمة مشفّرًا لقيم `.env`. يجلس API Proxy على المسار كي لا ينسخ تطبيقك حلقات إعادة المحاولة.
+توجيه webhooks يعمل على SQLite WAL، مع إعادات المحاولة وإعادة التشغيل. يُبقي EnvSync مخزن مفتاح-قيمة مشفّرًا لقيم `.env`. يجلس API Proxy على المسار كي لا ينسخ تطبيقك حلقات إعادة المحاولة.
 
 تخطيط cron والانتقال من EasyCron: [بنية مستضافة ذاتيًا](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -177,7 +177,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router. استقبل، وحوّل، وأعد التوجيه
 
-Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإعادات المحاولة، وإعادة تشغيل dead-letter.
+Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإعادات المحاولة، وإعادة التشغيل.
 
 [إعداد webhook](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [التوجيه عبر SQLite](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

@@ -6,7 +6,7 @@ This GitHub is the product docs and the free demo. [NexusCore](https://nexuscore
 
 [Free demo sample](https://github.com/alfredobustamante19/NexusCore/blob/main/nexuscore_lite.py) 
 
-![NexusCore Architecture & Dashboard](https://github.com/alfredobustamante19/NexusCore/blob/assets/preview-card.png)
+![NexusCore Architecture & Dashboard](preview-card.png)
 
 **Stop renting your stack. Self-hosted developer tools you own.**
 
@@ -46,7 +46,9 @@ NexusCore is that work as processes on **your** host.
 
 ### Demo Quick Launch
 
-Unzip `NexusCore Developer Demo.zip`. From the unzipped folder:
+Unzip `NexusCore Developer Demo.zip` and open the `NexusCore Developer Demo` folder. You need Python 3.12 or newer and Node.js 24 or newer.
+
+From that folder:
 
 ```bash
 ./start-demo.sh
@@ -145,7 +147,7 @@ EnvSync sets an admin password on first boot (`NEXUSENV_ADMIN_PASSWORD`). LogStr
 2. Your VPS: FastAPI + SQLite on Docker, or a Node.js process. Jobs, secrets, and payloads stay on disk you mount.
 3. Destinations you own: your API, Discord, a file. No vendor inbox sitting between the hops.
 
-Webhook routing runs in SQLite WAL, under 50MB RAM, with retries and dead-letter replay. EnvSync keeps an encrypted key-value store for `.env` values. API Proxy sits in the path so your app does not copy retry loops.
+Webhook routing runs in SQLite WAL, with retries and replay. EnvSync keeps an encrypted key-value store for `.env` values. API Proxy sits in the path so your app does not copy retry loops.
 
 Cron layout and EasyCron cutover: [self-hosted architecture](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -203,7 +205,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router. Receive, transform, forward
 
-Stripe, forms, GitHub → your API. WAL SQLite, retries, dead-letter replay.
+Stripe, forms, GitHub → your API. WAL SQLite, retries, and replay.
 
 [Webhook setup](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [SQLite routing](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

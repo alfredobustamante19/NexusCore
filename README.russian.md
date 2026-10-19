@@ -44,7 +44,7 @@ NexusCore — это та же работа в виде процессов на 
 
 ## Быстрый старт <a id="quick-start"></a>
 
-Бесплатное демо лежит в `NexusCore Developer Demo.zip` (`./start-demo.sh`, в Windows `.\Start Demo.ps1`, консоль на http://127.0.0.1:7400). `nexuscore_lite.py` слушает http://127.0.0.1:8000 после `pip install -r requirements.txt`. Лицензированный исходный код выдаётся после оплаты. Фрагменты ниже — это то, что вы запускаете тогда.
+Бесплатное демо лежит в `NexusCore Developer Demo.zip`. Откройте папку `NexusCore Developer Demo` (`./start-demo.sh`, в Windows `.\Start Demo.ps1`, консоль на http://127.0.0.1:7400). Нужны Python 3.12 или новее и Node.js 24 или новее. `nexuscore_lite.py` слушает http://127.0.0.1:8000 после `pip install -r requirements.txt`. Лицензированный исходный код выдаётся после оплаты. Фрагменты ниже — это то, что вы запускаете тогда.
 
 ### Пример Compose (после оплаты)
 
@@ -120,7 +120,7 @@ EnvSync задаёт пароль администратора при перво
 2. Ваш VPS: FastAPI + SQLite в Docker или процесс Node.js. Задачи, секреты и полезные нагрузки остаются на диске, который вы монтируете.
 3. Назначения, которые принадлежат вам: ваш API, Discord, файл. Между переходами нет ящика поставщика.
 
-Маршрутизация вебхуков работает на SQLite WAL, менее чем на 50 МБ ОЗУ, с повторами и повторным воспроизведением dead-letter. EnvSync хранит зашифрованное хранилище ключ-значение для значений `.env`. API Proxy стоит на пути, чтобы приложение не копировало циклы повторов.
+Маршрутизация вебхуков работает на SQLite WAL, с повторами и повторным воспроизведением. EnvSync хранит зашифрованное хранилище ключ-значение для значений `.env`. API Proxy стоит на пути, чтобы приложение не копировало циклы повторов.
 
 Схема cron и переход с EasyCron: [архитектура на своём хостинге](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -178,7 +178,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router. Принять, преобразовать, переслать
 
-Stripe, формы, GitHub → ваш API. SQLite WAL, повторы, повторное воспроизведение dead-letter.
+Stripe, формы, GitHub → ваш API. SQLite WAL, повторы и повторное воспроизведение.
 
 [Настройка вебхуков](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [Маршрутизация на SQLite](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

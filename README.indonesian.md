@@ -44,7 +44,7 @@ NexusCore adalah pekerjaan itu sebagai proses di host **Anda**.
 
 ## Mulai cepat <a id="quick-start"></a>
 
-Demo gratis ada di `NexusCore Developer Demo.zip` (`./start-demo.sh`, di Windows `.\Start Demo.ps1`, konsol di http://127.0.0.1:7400). `nexuscore_lite.py` mendengarkan di http://127.0.0.1:8000 setelah `pip install -r requirements.txt`. Kode berlisensi dikirim setelah checkout. Cuplikan di bawah ini adalah yang Anda jalankan saat itu.
+Demo gratis ada di `NexusCore Developer Demo.zip`. Buka folder `NexusCore Developer Demo` (`./start-demo.sh`, di Windows `.\Start Demo.ps1`, konsol di http://127.0.0.1:7400). Perlu Python 3.12 atau lebih baru dan Node.js 24 atau lebih baru. `nexuscore_lite.py` mendengarkan di http://127.0.0.1:8000 setelah `pip install -r requirements.txt`. Kode berlisensi dikirim setelah checkout. Cuplikan di bawah ini adalah yang Anda jalankan saat itu.
 
 ### Contoh Compose (setelah checkout)
 
@@ -120,7 +120,7 @@ EnvSync meminta kata sandi admin saat pertama kali jalan (`NEXUSENV_ADMIN_PASSWO
 2. VPS Anda: FastAPI + SQLite di Docker, atau satu proses Node.js. Job, rahasia, dan payload tetap di disk yang Anda mount.
 3. Tujuan yang Anda miliki: API Anda, Discord, sebuah berkas. Tidak ada kotak masuk vendor di antara lompatan.
 
-Perutean webhook berjalan di SQLite WAL, di bawah 50 MB RAM, dengan percobaan ulang dan pemutaran ulang dead-letter. EnvSync menyimpan penyimpanan kunci-nilai terenkripsi untuk nilai `.env`. API Proxy berada di jalur agar aplikasi Anda tidak menyalin loop percobaan ulang.
+Perutean webhook berjalan di SQLite WAL, dengan percobaan ulang dan pemutaran ulang. EnvSync menyimpan penyimpanan kunci-nilai terenkripsi untuk nilai `.env`. API Proxy berada di jalur agar aplikasi Anda tidak menyalin loop percobaan ulang.
 
 Tata letak cron dan perpindahan dari EasyCron: [arsitektur self-hosted](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -178,7 +178,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router. Terima, ubah, teruskan
 
-Stripe, formulir, GitHub → API Anda. SQLite WAL, percobaan ulang, pemutaran ulang dead-letter.
+Stripe, formulir, GitHub → API Anda. SQLite WAL, percobaan ulang, dan pemutaran ulang.
 
 [Penyiapan webhook](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [Perutean SQLite](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

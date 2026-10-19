@@ -44,7 +44,7 @@ NexusCore, c'est ce travail sous forme de processus sur **votre** hôte.
 
 ## Démarrage rapide <a id="quick-start"></a>
 
-Le demo gratuit est dans `NexusCore Developer Demo.zip` (`./start-demo.sh`, sous Windows `.\Start Demo.ps1`, console sur http://127.0.0.1:7400). `nexuscore_lite.py` écoute sur http://127.0.0.1:8000 après `pip install -r requirements.txt`. Le code sous licence est livré après le paiement. Les extraits ci-dessous sont ce que vous lancez à ce moment-là.
+Le demo gratuit est dans `NexusCore Developer Demo.zip`. Ouvrez le dossier `NexusCore Developer Demo` (`./start-demo.sh`, sous Windows `.\Start Demo.ps1`, console sur http://127.0.0.1:7400). Il faut Python 3.12 ou plus récent et Node.js 24 ou plus récent. `nexuscore_lite.py` écoute sur http://127.0.0.1:8000 après `pip install -r requirements.txt`. Le code sous licence est livré après le paiement. Les extraits ci-dessous sont ce que vous lancez à ce moment-là.
 
 ### Exemple Compose (après le paiement)
 
@@ -120,7 +120,7 @@ EnvSync demande un mot de passe administrateur au premier démarrage (`NEXUSENV_
 2. Votre VPS : FastAPI + SQLite sur Docker, ou un processus Node.js. Tâches, secrets et charges utiles restent sur le disque que vous montez.
 3. Des destinations qui vous appartiennent : votre API, Discord, un fichier. Aucune boîte de réception d'éditeur entre les sauts.
 
-Le routage des webhooks tourne en SQLite WAL, sous 50 Mo de RAM, avec nouvelles tentatives et rejeu des dead-letters. EnvSync conserve un magasin clé-valeur chiffré pour les valeurs de `.env`. API Proxy se place sur le chemin pour que votre application ne recopie pas des boucles de nouvelle tentative.
+Le routage des webhooks tourne en SQLite WAL, avec nouvelles tentatives et rejeu. EnvSync conserve un magasin clé-valeur chiffré pour les valeurs de `.env`. API Proxy se place sur le chemin pour que votre application ne recopie pas des boucles de nouvelle tentative.
 
 Agencement du cron et bascule depuis EasyCron : [architecture auto-hébergée](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -178,7 +178,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router. Recevoir, transformer, transmettre
 
-Stripe, formulaires, GitHub → votre API. SQLite WAL, nouvelles tentatives, rejeu des dead-letters.
+Stripe, formulaires, GitHub → votre API. SQLite WAL, nouvelles tentatives et rejeu.
 
 [Configuration des webhooks](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [Routage SQLite](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

@@ -44,7 +44,7 @@ NexusCore সেই কাজ **আপনার** হোস্টে প্র�
 
 ## দ্রুত শুরু <a id="quick-start"></a>
 
-বিনামূল্যের ডেমো `NexusCore Developer Demo.zip`-এ (`./start-demo.sh`, Windows-এ `.\Start Demo.ps1`, কনসোল http://127.0.0.1:7400)। `pip install -r requirements.txt`-এর পর `nexuscore_lite.py` http://127.0.0.1:8000-এ শোনে। লাইসেন্স করা সোর্স চেকআউটের পর পাওয়া যায়। নিচের অংশগুলো তখন আপনি চালান।
+বিনামূল্যের ডেমো `NexusCore Developer Demo.zip`-এ। `NexusCore Developer Demo` ফোল্ডার খুলুন (`./start-demo.sh`, Windows-এ `.\Start Demo.ps1`, কনসোল http://127.0.0.1:7400)। Python 3.12 বা নতুন এবং Node.js 24 বা নতুন লাগবে। `pip install -r requirements.txt`-এর পর `nexuscore_lite.py` http://127.0.0.1:8000-এ শোনে। লাইসেন্স করা সোর্স চেকআউটের পর পাওয়া যায়। নিচের অংশগুলো তখন আপনি চালান।
 
 ### Compose-এর উদাহরণ (চেকআউটের পর)
 
@@ -120,7 +120,7 @@ EnvSync প্রথম বুটে অ্যাডমিন পাসওয়
 2. আপনার VPS: Docker-এ FastAPI + SQLite, অথবা একটি Node.js প্রসেস। জব, সিক্রেট ও পেলোড আপনার মাউন্ট করা ডিস্কে থাকে।
 3. আপনার নিজের গন্তব্য: আপনার API, Discord, একটি ফাইল। হপের মাঝে কোনো ভেন্ডরের ইনবক্স নেই।
 
-Webhook রাউটিং SQLite WAL-এ চলে, ৫০ এমবি RAM-এর নিচে, পুনরায় চেষ্টা ও dead-letter রিপ্লে সহ। EnvSync `.env` মানের জন্য একটি এনক্রিপ্টেড কী-ভ্যালু স্টোর রাখে। API Proxy পথে বসে, যাতে আপনার অ্যাপ রিট্রাই লুপ কপি না করে।
+Webhook রাউটিং SQLite WAL-এ চলে, পুনরায় চেষ্টা ও রিপ্লে সহ। EnvSync `.env` মানের জন্য একটি এনক্রিপ্টেড কী-ভ্যালু স্টোর রাখে। API Proxy পথে বসে, যাতে আপনার অ্যাপ রিট্রাই লুপ কপি না করে।
 
 Cron-এর বিন্যাস ও EasyCron থেকে সরে আসা: [স্ব-হোস্টেড আর্কিটেকচার](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -178,7 +178,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router। গ্রহণ, রূপান্তর, ফরওয়ার্ড
 
-Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনরায় চেষ্টা, dead-letter রিপ্লে।
+Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনরায় চেষ্টা ও রিপ্লে।
 
 [Webhook সেটআপ](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [SQLite রাউটিং](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

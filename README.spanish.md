@@ -46,7 +46,7 @@ NexusCore es ese trabajo como procesos en **tu** host.
 
 ## Inicio rápido <a id="quick-start"></a>
 
-El demo gratuito está en `NexusCore Developer Demo.zip` (`./start-demo.sh`, en Windows `.\Start Demo.ps1`, consola en http://127.0.0.1:7400). `nexuscore_lite.py` escucha en http://127.0.0.1:8000 tras `pip install -r requirements.txt`. El código con licencia se entrega tras el pago. Los fragmentos de abajo son lo que ejecutas entonces.
+El demo gratuito está en `NexusCore Developer Demo.zip`. Abre la carpeta `NexusCore Developer Demo` (`./start-demo.sh`, en Windows `.\Start Demo.ps1`, consola en http://127.0.0.1:7400). Hacen falta Python 3.12 o posterior y Node.js 24 o posterior. `nexuscore_lite.py` escucha en http://127.0.0.1:8000 tras `pip install -r requirements.txt`. El código con licencia se entrega tras el pago. Los fragmentos de abajo son lo que ejecutas entonces.
 
 ### Ejemplo de Compose (después del pago)
 
@@ -122,7 +122,7 @@ EnvSync pide una contraseña de administrador en el primer arranque (`NEXUSENV_A
 2. Tu VPS: FastAPI + SQLite en Docker, o un proceso Node.js. Los trabajos, los secretos y los payloads permanecen en el disco que montas.
 3. Destinos que son tuyos: tu API, Discord, un archivo. Ninguna bandeja de un proveedor entre los saltos.
 
-El enrutamiento de webhooks corre en SQLite WAL, con menos de 50 MB de RAM, con reintentos y reproducción de dead-letter. EnvSync mantiene un almacén clave-valor cifrado para los valores de `.env`. API Proxy se sitúa en el camino para que tu aplicación no copie bucles de reintento.
+El enrutamiento de webhooks corre en SQLite WAL, con reintentos y reproducción. EnvSync mantiene un almacén clave-valor cifrado para los valores de `.env`. API Proxy se sitúa en el camino para que tu aplicación no copie bucles de reintento.
 
 Diseño de cron y migración desde EasyCron: [arquitectura autohospedada](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -180,7 +180,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router. Recibir, transformar, reenviar
 
-Stripe, formularios, GitHub → tu API. SQLite WAL, reintentos, reproducción de dead-letter.
+Stripe, formularios, GitHub → tu API. SQLite WAL, reintentos y reproducción.
 
 [Configuración de webhooks](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [Enrutamiento con SQLite](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 

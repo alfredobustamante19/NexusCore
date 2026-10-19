@@ -44,7 +44,7 @@ NexusCore 把这件事做成跑在**你的**主机上的进程。
 
 ## 快速开始 <a id="quick-start"></a>
 
-免费演示在 `NexusCore Developer Demo.zip`（`./start-demo.sh`，Windows 上是 `.\Start Demo.ps1`，控制台为 http://127.0.0.1:7400）。`pip install -r requirements.txt` 之后，`nexuscore_lite.py` 监听 http://127.0.0.1:8000。授权源代码在结账后交付。下面的片段就是那时要运行的内容。
+免费演示在 `NexusCore Developer Demo.zip`。打开 `NexusCore Developer Demo` 文件夹（`./start-demo.sh`，Windows 上是 `.\Start Demo.ps1`，控制台为 http://127.0.0.1:7400）。需要 Python 3.12 或更新版本，以及 Node.js 24 或更新版本。`pip install -r requirements.txt` 之后，`nexuscore_lite.py` 监听 http://127.0.0.1:8000。授权源代码在结账后交付。下面的片段就是那时要运行的内容。
 
 ### Compose 示例（结账后）
 
@@ -120,7 +120,7 @@ EnvSync 在首次启动时设置管理员密码（`NEXUSENV_ADMIN_PASSWORD`）�
 2. 你的 VPS：Docker 上的 FastAPI + SQLite，或一个 Node.js 进程。任务、密钥和载荷留在你挂载的磁盘上。
 3. 你拥有的目的地：你的 API、Discord、一个文件。跳转之间没有供应商的收件箱。
 
-Webhook 路由运行在 SQLite WAL 上，内存低于 50MB，带重试和死信重放。EnvSync 为 `.env` 的值维护一个加密的键值存储。API Proxy 位于调用路径上，这样你的应用就不必复制重试循环。
+Webhook 路由运行在 SQLite WAL 上，带重试和重放。EnvSync 为 `.env` 的值维护一个加密的键值存储。API Proxy 位于调用路径上，这样你的应用就不必复制重试循环。
 
 Cron 布局与从 EasyCron 迁移：[自托管架构](https://nexuscore-store.whop.site/guides/self-hosted-architecture-guide)
 
@@ -178,7 +178,7 @@ curl -sS -X POST http://127.0.0.1:8000/api/tasks \
 
 ### Webhook Router。接收、转换、转发
 
-Stripe、表单、GitHub → 你的 API。WAL SQLite、重试、死信重放。
+Stripe、表单、GitHub → 你的 API。WAL SQLite、重试和重放。
 
 [Webhook 搭建](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) · [SQLite 路由](https://nexuscore-store.whop.site/guides/sqlite-webhook-routing)
 
