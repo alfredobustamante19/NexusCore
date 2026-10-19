@@ -45,16 +45,31 @@ NexusCore is that work as processes on **your** host.
 ## Quick start
 
 ### Demo Quick Launch
-Spin up the entire interactive 7-microservice suite in 10 seconds:
-```bash
-./start-demo.sh   # Linux / macOS
-.\Start-Demo.ps1 # Windows
 
---------------------------------------------------------
-NexusCore Hub Running at http://localhost:8080
-⭐ If you find this stack useful, drop a star on this repository!
---------------------------------------------------------
+Unzip `NexusCore Developer Demo.zip`. From the unzipped folder:
+
+```bash
+./start-demo.sh
 ```
+
+On Windows, in PowerShell:
+
+```powershell
+.\Start Demo.ps1
+```
+
+The console opens at http://127.0.0.1:7400.
+
+### Lite sample
+
+`nexuscore_lite.py` is a single-process preview. It does not start the seven-service demo.
+
+```bash
+pip install -r requirements.txt
+python nexuscore_lite.py
+```
+
+It listens on http://127.0.0.1:8000.
 
 ### Example Compose (after checkout)
 
