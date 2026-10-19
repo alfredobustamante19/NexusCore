@@ -5,7 +5,7 @@
 
 > اللغة: **العربية**
 
-هذا المستودع على GitHub هو توثيق المنتج. NexusCore تجاري. يُسلَّم المصدر والصور والثنائيات بعد الدفع في [المتجر](https://nexuscore-store.whop.site). هذه الشجرة هي ملف README فقط.
+هذا المستودع على GitHub هو توثيق المنتج والعرض المجاني. NexusCore تجاري. يُسلَّم المصدر المرخّص بعد الدفع في [المتجر](https://nexuscore-store.whop.site).
 
 **توقّف عن استئجار حزمتك. أدوات مطورين مستضافة ذاتيًا وتملكها أنت.**
 
@@ -33,8 +33,8 @@ NexusCore هو ذلك العمل كعمليات على مضيفك **أنت**.
 
 - ادفع مرة واحدة. احتفظ بالمصدر.
 - FastAPI + SQLite + Docker من أجل cron وwebhooks وخط المعالجة والإدارة.
-- خدمات مصغّرة بثنائية واحدة من أجل LogStream وEnvSync وAPI Proxy.
-- `NEXUS_TELEMETRY=off` هو الافتراضي. لا شيء يتصل بالخارج.
+- عمليات Node.js من أجل LogStream وEnvSync وAPI Proxy.
+- لا ترسل الخدمات بيانات استخدام. تبقى العيّنة الخفيفة صامتة ما لم يُضبط `NEXUS_TELEMETRY`.
 - بلا Kubernetes. بلا صندوق وارد لبائع بين القفزات.
 
 **احصل على ترخيص → [nexuscore-store.whop.site](https://nexuscore-store.whop.site)**
@@ -43,71 +43,80 @@ NexusCore هو ذلك العمل كعمليات على مضيفك **أنت**.
 
 ## بدء سريع <a id="quick-start"></a>
 
-لا تنسخ هذا المستودع متوقعًا حزمة تعمل فورًا. بعد الدفع تصل التراخيص كمصدر وصور Docker وثنائيات في ملفات العضوية. المقتطفات أدناه هي ما تشغّله حينئذ.
+العرض المجاني في `NexusCore Developer Demo.zip` (`./start-demo.sh`، وعلى Windows `.\Start Demo.ps1`، ووحدة التحكم على http://127.0.0.1:7400). يستمع `nexuscore_lite.py` على http://127.0.0.1:8000 بعد `pip install -r requirements.txt`. يُسلَّم المصدر المرخّص بعد الدفع. المقتطفات أدناه هي ما تشغّله حينئذ.
 
 ### مثال Compose (بعد الدفع)
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
 ```yaml
-# docker-compose.yml  — عقدة واحدة، نحو 60 ثانية
-# الصور تُسلَّم في ملفات العضوية. ليست سحبًا عامًا من هذا GitHub.
+# NexusCron/docker-compose.yml — built from the licensed source, not pulled from this GitHub.
+# Webhook Router ships its own compose file and also binds host port 8000, so run it from its own folder.
 services:
-  nexuscron:
-    image: nexuscron:latest
+  scheduler:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8787:8787"
+      - "8000:8000"
     environment:
-      TZ: Europe/Madrid
-      NEXUSCRON_DATA: /data
-      NEXUS_TELEMETRY: "off"
+      DATABASE_PATH: /data/scheduler.db
+      SCHEDULER_TIMEZONE: UTC
     volumes:
-      - ./data/cron:/data
+      - pulse-data:/data
 
-  webhook-router:
-    image: webhook-router:latest
+volumes:
+  pulse-data:
+```
+
+```yaml
+# Webhook Router/docker-compose.yml
+services:
+  bridge:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8090:8090"
+      - "8000:8000"
     environment:
-      NEXUS_TELEMETRY: "off"
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?Set ADMIN_API_TOKEN}
+      DATABASE_URL: sqlite:////app/data/bridge.db
     volumes:
-      - ./data/webhooks:/var/lib/webhook-router
+      - bridge-data:/app/data
+
+volumes:
+  bridge-data:
 ```
 
 ### إنشاء مهمة عبر REST
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
   -d '{
     "name": "invoice-reminders",
-    "cron": "0 8 * * 1-5",
-    "method": "POST",
-    "url": "https://billing.internal/jobs/remind",
-    "timeout_ms": 15000
+    "cron_expression": "0 8 * * 1-5",
+    "http_method": "POST",
+    "target_url": "https://billing.internal/jobs/remind"
   }'
 ```
 
-### خدمات مصغّرة بثنائية واحدة (Compose غير مطلوب)
+### عمليات Node.js (Compose غير مطلوب)
 
 ```bash
-./envsync-agent    # مزامنة مشفّرة لملفات .env بين VPS والحاسوب المحمول والخدمات
-./api-proxy        # إعادات المحاولة وحدود المعدّل وcircuit breaker والبدائل
-./logstream        # استقبال HTTP + UDP وSQLite ولوحة مباشرة
+npm start          # EnvSync, http://127.0.0.1:8787. مزامنة مشفّرة لملفات .env بين VPS والحاسوب المحمول والخدمات
+npm start          # API Proxy, http://127.0.0.1:8080. إعادات المحاولة وحدود المعدّل وcircuit breaker والبدائل
+npm start          # LogStream, http://127.0.0.1:8787. Set PORT if 8787 is already taken. استقبال HTTP + UDP وSQLite ولوحة مباشرة
 ```
 
-لا حساب يُنشأ بعد الدفع. اربط بـ localhost، واحفظ نسخة احتياطية من `./data` مع بقية الجهاز.
+يضبط EnvSync كلمة مرور للمسؤول عند أول تشغيل (`NEXUSENV_ADMIN_PASSWORD`). يتوقع LogStream المتغير `NEXUS_TOKEN` في `.env`. اربط بـ localhost، واحفظ نسخة احتياطية من مجلد البيانات مع بقية الجهاز.
 
 ---
 
 ## كيف يعمل <a id="how-it-works"></a>
 
 1. الدخول: Stripe أو GitHub أو النماذج أو نبضة cron. HTTP عادي إلى نقطة نهاية تستضيفها أنت.
-2. VPS الخاص بك: FastAPI + SQLite على Docker، أو ثنائية واحدة. المهام والأسرار والحمولات تبقى على القرص الذي تركّبه.
+2. VPS الخاص بك: FastAPI + SQLite على Docker، أو عملية Node.js. المهام والأسرار والحمولات تبقى على القرص الذي تركّبه.
 3. وجهات تملكها: واجهة API لديك، أو Discord، أو ملف. لا صندوق وارد لبائع بين القفزات.
 
 توجيه webhooks يعمل على SQLite WAL، بأقل من 50 ميغابايت من الذاكرة، مع إعادات المحاولة وإعادة تشغيل dead-letter. يُبقي EnvSync مخزن مفتاح-قيمة مشفّرًا لقيم `.env`. يجلس API Proxy على المسار كي لا ينسخ تطبيقك حلقات إعادة المحاولة.
@@ -120,13 +129,13 @@ curl -sS -X POST http://127.0.0.1:8787/api/jobs \
 
 | الأداة | ما تستبدله | الشكل | الترخيص |
 |------|------------------|-------|---------|
-| [NexusCron](https://nexuscore-store.whop.site) | EasyCron وcron-job.org | FastAPI + SQLite + Docker | $94.99 مدى الحياة |
-| [Webhook Router](https://nexuscore-store.whop.site) | Hookdeck وSvix وتوجيه Zapier | FastAPI + SQLite WAL + Docker | $94.99 مدى الحياة |
-| [NexusPipeline](https://nexuscore-store.whop.site) | SaaS لسير العمل والعاملين في السحابة | FastAPI + SQLModel + SQLite | $149.00 مدى الحياة |
-| [NexusAdmin](https://nexuscore-store.whop.site) | لوحة تشغيل مستضافة | لوحة Docker إلى جانب Pipeline | $94.99 مدى الحياة |
-| [LogStream](https://nexuscore-store.whop.site) | SaaS للمراقبة | Node.js بثنائية واحدة، HTTP + UDP | $79.99 مدى الحياة |
-| [EnvSync Agent](https://nexuscore-store.whop.site) | Doppler / مستأجر أسرار إضافي | وكيل zero-trust وKV مشفّر وREST | $99 مدى الحياة |
-| [API Proxy Service](https://nexuscore-store.whop.site) | SaaS بوابة لإعادات المحاولة | ثنائية واحدة: تراجع وحدود وقاطع | $99 مدى الحياة |
+| [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron) | EasyCron وcron-job.org | FastAPI + SQLite + Docker | $94.99 مدى الحياة |
+| [Webhook Router](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) | Hookdeck وSvix وتوجيه Zapier | FastAPI + SQLite WAL + Docker | $94.99 مدى الحياة |
+| [NexusPipeline](https://nexuscore-store.whop.site/guides/self-hosted-pipeline) | SaaS لسير العمل والعاملين في السحابة | FastAPI + SQLModel + SQLite | $149.00 مدى الحياة |
+| [NexusAdmin](https://nexuscore-store.whop.site/guides/self-hosted-admin) | لوحة تشغيل مستضافة | لوحة Docker إلى جانب Pipeline | $94.99 مدى الحياة |
+| [LogStream](https://nexuscore-store.whop.site/guides/self-hosted-logstream) | SaaS للمراقبة | عملية Node.js، HTTP + UDP | $79.99 مدى الحياة |
+| [EnvSync Agent](https://nexuscore-store.whop.site/guides/self-hosted-envsync) | Doppler / مستأجر أسرار إضافي | وكيل zero-trust وKV مشفّر وREST | $99 مدى الحياة |
+| [API Proxy Service](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) | SaaS بوابة لإعادات المحاولة | عملية Node.js: تراجع وحدود وقاطع | $99 مدى الحياة |
 
 ### الحزم المجمّعة
 
@@ -147,7 +156,7 @@ curl -sS -X POST http://127.0.0.1:8787/api/jobs \
 | البيانات | الحمولات والجداول والسجلات على سحابة غيرك | ملكية كاملة للبيانات على مضيفك |
 | الإعداد | إنشاء حساب وحدود الخطة والارتباط بالبائع | إعداد Docker خلال 60 ثانية على عقدة واحدة |
 | الشيفرة | SaaS مغلق لا يمكنك فحصه ولا تفريعه | مصدر كامل مع الترخيص |
-| القياس عن بُعد | عدّادات الاستخدام | `NEXUS_TELEMETRY=off` |
+| القياس عن بُعد | عدّادات الاستخدام | بلا عدّاد استخدام |
 | العنقود | مستواهم متعدد المستأجرين | عقدة واحدة. بلا Kubernetes |
 
 Cron مستضاف بسعر $20–$50 شهريًا يساوي $240–$600 في السنة الأولى. NexusCron سعره $94.99 مرة واحدة. إن كان VPS داخل الميزانية أصلًا، فالتكلفة الجديدة الوحيدة هي الترخيص.
@@ -159,9 +168,9 @@ Cron مستضاف بسعر $20–$50 شهريًا يساوي $240–$600 في ا
 ### NexusCron. طلبات HTTP على مؤقّت تملكه
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
-  -d '{"name":"health-ping","cron":"*/5 * * * *","method":"GET","url":"https://app.internal/health"}'
+  -d '{"name":"health-ping","cron_expression":"*/5 * * * *","http_method":"GET","target_url":"https://app.internal/health"}'
 ```
 
 [إعداد cron](https://nexuscore-store.whop.site/guides/self-hosted-cron) · [بديل EasyCron](https://nexuscore-store.whop.site/guides/easycron-alternative) · [الانتقال من EasyCron](https://nexuscore-store.whop.site/guides/migrate-off-easycron)
@@ -175,7 +184,8 @@ Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإ�
 ### EnvSync. توقّف عن نسخ `.env` يدويًا
 
 ```bash
-./envsync-agent
+npm start
+# http://127.0.0.1:8787
 ```
 
 1. نزّل الوكيل من ملفات العضوية.
@@ -187,7 +197,8 @@ Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإ�
 ### API Proxy. إعادات المحاولة في المسار، لا في كل خدمة
 
 ```bash
-./api-proxy
+npm start
+# http://127.0.0.1:8080
 ```
 
 وجّه خدماتك إلى الوكيل بدل المصدر. اضبط إعادة المحاولة وحدّ المعدّل والبديل. أكّد المقاييس على اللوحة المحلية.
@@ -200,7 +211,7 @@ Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإ�
 
 ### هل هذا مفتوح المصدر؟
 
-لا. NexusCore تجاري. ترخيص مدى الحياة يشمل المصدر الكامل بعد الدفع على Whop. هذا GitHub توثيق فقط، وليس شجرة المصدر، وهو ليس FOSS.
+لا. NexusCore تجاري. ترخيص مدى الحياة يشمل المصدر الكامل بعد الدفع على Whop. هذا GitHub فيه التوثيق والعرض المجاني، وليس شجرة المصدر المرخّص، وهو ليس FOSS.
 
 ### هل أحتاج إلى VPS جديد؟
 
@@ -212,7 +223,7 @@ Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإ�
 
 ### هل يتصل شيء بالخارج؟
 
-`NEXUS_TELEMETRY=off` هو الافتراضي. لا عدّادات استخدام، ولا منارة تحليلات، ولا واجهة API للبائع.
+لا ترسل الخدمات بيانات استخدام. تبقى العيّنة الخفيفة صامتة ما لم يُضبط `NEXUS_TELEMETRY`.
 
 ### أين تقبع الأسرار والسجلات؟
 
@@ -228,7 +239,7 @@ Stripe والنماذج وGitHub → واجهة API لديك. SQLite WAL، وإ�
 
 ### هل يمكنني شراء أداة واحدة؟
 
-نعم. ابدأ بـ [API Proxy](https://nexuscore-store.whop.site) أو [NexusCron](https://nexuscore-store.whop.site). حزمة [Ops Microservices](https://nexuscore-store.whop.site) هي LogStream + EnvSync + API Proxy بسعر $199.99.
+نعم. ابدأ بـ [API Proxy](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) أو [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron). حزمة [Ops Microservices](https://nexuscore-store.whop.site) هي LogStream + EnvSync + API Proxy بسعر $199.99.
 
 ---
 

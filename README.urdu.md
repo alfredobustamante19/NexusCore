@@ -6,7 +6,7 @@
 
 > زبان: **اردو**
 
-یہ GitHub پروڈکٹ کی دستاویزات ہے۔ NexusCore تجارتی ہے۔ سورس، امیجز اور بائنریز چیک آؤٹ کے بعد [اسٹور](https://nexuscore-store.whop.site) پر ملتے ہیں۔ اس ٹری میں صرف README ہے۔
+یہ GitHub پروڈکٹ کی دستاویزات اور مفت ڈیمو ہے۔ NexusCore تجارتی ہے۔ لائسنس شدہ سورس چیک آؤٹ کے بعد [اسٹور](https://nexuscore-store.whop.site) پر ملتا ہے۔
 
 **اپنا اسٹیک کرایے پر لینا بند کریں۔ خود میزبانی والے ڈویلپر ٹولز جو آپ کے اپنے ہوں۔**
 
@@ -34,8 +34,8 @@ NexusCore وہی کام **آپ کے** ہوسٹ پر عمل کے طور پر ہے
 
 - ایک بار ادا کریں۔ سورس اپنے پاس رکھیں۔
 - cron، webhook، پائپ لائن اور ایڈمن کے لیے FastAPI + SQLite + Docker۔
-- LogStream، EnvSync اور API Proxy کے لیے واحد بائنری مائیکرو سروسز۔
-- `NEXUS_TELEMETRY=off` طے شدہ ہے۔ کچھ بھی باہر رابطہ نہیں کرتا۔
+- LogStream، EnvSync اور API Proxy کے لیے Node.js عمل۔
+- سروسز استعمال کا ڈیٹا نہیں بھیجتیں۔ لائٹ نمونہ اس وقت تک خاموش رہتا ہے جب تک `NEXUS_TELEMETRY` سیٹ نہ ہو۔
 - Kubernetes نہیں۔ ہاپس کے درمیان کسی وینڈر کا ان باکس نہیں۔
 
 **لائسنس لیں → [nexuscore-store.whop.site](https://nexuscore-store.whop.site)**
@@ -44,71 +44,80 @@ NexusCore وہی کام **آپ کے** ہوسٹ پر عمل کے طور پر ہے
 
 ## فوری آغاز <a id="quick-start"></a>
 
-اس ریپو کو کلون کر کے چلتا ہوا اسٹیک مت امید رکھیں۔ چیک آؤٹ کے بعد لائسنس سورس، Docker امیجز اور بائنریز کی صورت میں آپ کی ممبر فائلوں میں آتے ہیں۔ نیچے دیے ٹکڑے وہی ہیں جو آپ تب چلاتے ہیں۔
+مفت ڈیمو `NexusCore Developer Demo.zip` میں ہے (`./start-demo.sh`، Windows پر `.\Start Demo.ps1`، کنسول http://127.0.0.1:7400)۔ `pip install -r requirements.txt` کے بعد `nexuscore_lite.py` http://127.0.0.1:8000 پر سنتا ہے۔ لائسنس شدہ سورس چیک آؤٹ کے بعد ملتا ہے۔ نیچے دیے ٹکڑے وہی ہیں جو آپ تب چلاتے ہیں۔
 
 ### Compose کی مثال (چیک آؤٹ کے بعد)
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
 ```yaml
-# docker-compose.yml  — ایک نوڈ، تقریباً 60 سیکنڈ
-# امیجز ممبر فائلوں میں آتی ہیں۔ یہ اس GitHub سے عوامی pull نہیں ہیں۔
+# NexusCron/docker-compose.yml — built from the licensed source, not pulled from this GitHub.
+# Webhook Router ships its own compose file and also binds host port 8000, so run it from its own folder.
 services:
-  nexuscron:
-    image: nexuscron:latest
+  scheduler:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8787:8787"
+      - "8000:8000"
     environment:
-      TZ: Europe/Madrid
-      NEXUSCRON_DATA: /data
-      NEXUS_TELEMETRY: "off"
+      DATABASE_PATH: /data/scheduler.db
+      SCHEDULER_TIMEZONE: UTC
     volumes:
-      - ./data/cron:/data
+      - pulse-data:/data
 
-  webhook-router:
-    image: webhook-router:latest
+volumes:
+  pulse-data:
+```
+
+```yaml
+# Webhook Router/docker-compose.yml
+services:
+  bridge:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8090:8090"
+      - "8000:8000"
     environment:
-      NEXUS_TELEMETRY: "off"
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?Set ADMIN_API_TOKEN}
+      DATABASE_URL: sqlite:////app/data/bridge.db
     volumes:
-      - ./data/webhooks:/var/lib/webhook-router
+      - bridge-data:/app/data
+
+volumes:
+  bridge-data:
 ```
 
 ### REST پر ایک جاب بنائیں
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
   -d '{
     "name": "invoice-reminders",
-    "cron": "0 8 * * 1-5",
-    "method": "POST",
-    "url": "https://billing.internal/jobs/remind",
-    "timeout_ms": 15000
+    "cron_expression": "0 8 * * 1-5",
+    "http_method": "POST",
+    "target_url": "https://billing.internal/jobs/remind"
   }'
 ```
 
-### واحد بائنری مائیکرو سروسز (Compose ضروری نہیں)
+### Node.js عمل (Compose ضروری نہیں)
 
 ```bash
-./envsync-agent    # VPS، لیپ ٹاپ اور سروسز کے درمیان خفیہ .env سنک
-./api-proxy        # دوبارہ کوشش، شرح کی حد، circuit breaker، فال بیک
-./logstream        # HTTP + UDP انٹیک، SQLite، براہ راست ڈیش بورڈ
+npm start          # EnvSync, http://127.0.0.1:8787. VPS، لیپ ٹاپ اور سروسز کے درمیان خفیہ .env سنک
+npm start          # API Proxy, http://127.0.0.1:8080. دوبارہ کوشش، شرح کی حد، circuit breaker، فال بیک
+npm start          # LogStream, http://127.0.0.1:8787. Set PORT if 8787 is already taken. HTTP + UDP انٹیک، SQLite، براہ راست ڈیش بورڈ
 ```
 
-چیک آؤٹ کے بعد کوئی اکاؤنٹ بنانا نہیں۔ localhost سے جوڑیں، اور `./data` کا بیک اپ باقی مشین کے ساتھ رکھیں۔
+EnvSync پہلی بار چلتے وقت ایڈمن پاس ورڈ مانگتا ہے (`NEXUSENV_ADMIN_PASSWORD`)۔ LogStream `.env` میں `NEXUS_TOKEN` چاہتا ہے۔ localhost سے جوڑیں، اور ڈیٹا ڈائریکٹری کا بیک اپ باقی مشین کے ساتھ رکھیں۔
 
 ---
 
 ## یہ کیسے کام کرتا ہے <a id="how-it-works"></a>
 
 1. داخلہ: Stripe، GitHub، فارم، یا ایک cron ٹک۔ سادہ HTTP اس اینڈ پوائنٹ پر جس کی میزبانی آپ کرتے ہیں۔
-2. آپ کا VPS: Docker پر FastAPI + SQLite، یا ایک بائنری۔ جابز، سیکرٹس اور پے لوڈ اس ڈسک پر رہتے ہیں جسے آپ ماؤنٹ کرتے ہیں۔
+2. آپ کا VPS: Docker پر FastAPI + SQLite، یا ایک Node.js عمل۔ جابز، سیکرٹس اور پے لوڈ اس ڈسک پر رہتے ہیں جسے آپ ماؤنٹ کرتے ہیں۔
 3. آپ کی اپنی منزل: آپ کا API، Discord، ایک فائل۔ ہاپس کے درمیان کسی وینڈر کا ان باکس نہیں۔
 
 Webhook روٹنگ SQLite WAL پر چلتی ہے، 50MB RAM سے کم میں، دوبارہ کوشش اور dead-letter ری پلے کے ساتھ۔ EnvSync `.env` کی قدروں کے لیے خفیہ کلید-قدر اسٹور رکھتا ہے۔ API Proxy راستے میں بیٹھتا ہے تاکہ آپ کی ایپ ری ٹرائی لوپ نقل نہ کرے۔
@@ -121,13 +130,13 @@ Cron کی ترتیب اور EasyCron سے منتقلی: [خود میزبانی �
 
 | ٹول | یہ کس کی جگہ لیتا ہے | شکل | لائسنس |
 |------|------------------|-------|---------|
-| [NexusCron](https://nexuscore-store.whop.site) | EasyCron، cron-job.org | FastAPI + SQLite + Docker | $94.99 تاحیات |
-| [Webhook Router](https://nexuscore-store.whop.site) | Hookdeck، Svix، Zapier روٹنگ | FastAPI + SQLite WAL + Docker | $94.99 تاحیات |
-| [NexusPipeline](https://nexuscore-store.whop.site) | کلاؤڈ ورک فلو / ورکر SaaS | FastAPI + SQLModel + SQLite | $149.00 تاحیات |
-| [NexusAdmin](https://nexuscore-store.whop.site) | میزبانی شدہ آپریشنز ڈیش بورڈ | Pipeline کے ساتھ Docker ڈیش بورڈ | $94.99 تاحیات |
-| [LogStream](https://nexuscore-store.whop.site) | مشاہدے کا SaaS | واحد بائنری Node.js، HTTP + UDP | $79.99 تاحیات |
-| [EnvSync Agent](https://nexuscore-store.whop.site) | Doppler / اضافی سیکرٹ ٹیننٹ | زیرو ٹرسٹ ایجنٹ، خفیہ KV، REST | $99 تاحیات |
-| [API Proxy Service](https://nexuscore-store.whop.site) | دوبارہ کوشش کے لیے گیٹ وے SaaS | واحد بائنری: بیک آف، حد، بریکر | $99 تاحیات |
+| [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron) | EasyCron، cron-job.org | FastAPI + SQLite + Docker | $94.99 تاحیات |
+| [Webhook Router](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) | Hookdeck، Svix، Zapier روٹنگ | FastAPI + SQLite WAL + Docker | $94.99 تاحیات |
+| [NexusPipeline](https://nexuscore-store.whop.site/guides/self-hosted-pipeline) | کلاؤڈ ورک فلو / ورکر SaaS | FastAPI + SQLModel + SQLite | $149.00 تاحیات |
+| [NexusAdmin](https://nexuscore-store.whop.site/guides/self-hosted-admin) | میزبانی شدہ آپریشنز ڈیش بورڈ | Pipeline کے ساتھ Docker ڈیش بورڈ | $94.99 تاحیات |
+| [LogStream](https://nexuscore-store.whop.site/guides/self-hosted-logstream) | مشاہدے کا SaaS | Node.js عمل، HTTP + UDP | $79.99 تاحیات |
+| [EnvSync Agent](https://nexuscore-store.whop.site/guides/self-hosted-envsync) | Doppler / اضافی سیکرٹ ٹیننٹ | زیرو ٹرسٹ ایجنٹ، خفیہ KV، REST | $99 تاحیات |
+| [API Proxy Service](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) | دوبارہ کوشش کے لیے گیٹ وے SaaS | Node.js عمل: بیک آف، حد، بریکر | $99 تاحیات |
 
 ### بنڈل
 
@@ -148,7 +157,7 @@ Cron کی ترتیب اور EasyCron سے منتقلی: [خود میزبانی �
 | ڈیٹا | پے لوڈ، شیڈول اور لاگ کسی اور کے کلاؤڈ پر | آپ کے اپنے ہوسٹ پر ڈیٹا کی مکمل ملکیت |
 | سیٹ اپ | اکاؤنٹ، پلان کی حدیں اور وینڈر پر انحصار | ایک نوڈ پر 60 سیکنڈ کا Docker سیٹ اپ |
 | کوڈ | بند SaaS، جسے آپ نہ دیکھ سکتے ہیں نہ فورک کر سکتے ہیں | لائسنس کے ساتھ مکمل سورس کوڈ |
-| ٹیلی میٹری | استعمال کے میٹر | `NEXUS_TELEMETRY=off` |
+| ٹیلی میٹری | استعمال کے میٹر | کوئی استعمال میٹر نہیں |
 | کلسٹر | ان کا ملٹی ٹیننٹ پلین | ایک نوڈ۔ Kubernetes نہیں |
 
 $20–$50 فی ماہ کا میزبانی شدہ cron پہلے سال میں $240–$600 ہوتا ہے۔ NexusCron ایک بار $94.99 ہے۔ اگر VPS پہلے سے بجٹ میں ہے تو نیا خرچ صرف لائسنس ہے۔
@@ -160,9 +169,9 @@ $20–$50 فی ماہ کا میزبانی شدہ cron پہلے سال میں $24
 ### NexusCron۔ آپ کے اپنے ٹائمر پر HTTP
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
-  -d '{"name":"health-ping","cron":"*/5 * * * *","method":"GET","url":"https://app.internal/health"}'
+  -d '{"name":"health-ping","cron_expression":"*/5 * * * *","http_method":"GET","target_url":"https://app.internal/health"}'
 ```
 
 [Cron سیٹ اپ](https://nexuscore-store.whop.site/guides/self-hosted-cron) · [EasyCron کا متبادل](https://nexuscore-store.whop.site/guides/easycron-alternative) · [EasyCron سے نکلے](https://nexuscore-store.whop.site/guides/migrate-off-easycron)
@@ -176,7 +185,8 @@ Stripe، فارم، GitHub → آپ کا API۔ WAL SQLite، دوبارہ کوش�
 ### EnvSync۔ `.env` ہاتھ سے نقل کرنا بند کریں
 
 ```bash
-./envsync-agent
+npm start
+# http://127.0.0.1:8787
 ```
 
 1. ممبر فائلوں سے ایجنٹ ڈاؤن لوڈ کریں۔
@@ -188,7 +198,8 @@ Stripe، فارم، GitHub → آپ کا API۔ WAL SQLite، دوبارہ کوش�
 ### API Proxy۔ دوبارہ کوشش راستے میں ہو، ہر سروس میں نہیں
 
 ```bash
-./api-proxy
+npm start
+# http://127.0.0.1:8080
 ```
 
 اپنی سروسز کو اپ اسٹریم کی بجائے پراکسی کی طرف کریں۔ دوبارہ کوشش، شرح کی حد اور فال بیک مقرر کریں۔ مقامی ڈیش بورڈ پر میٹرکس کی تصدیق کریں۔
@@ -201,7 +212,7 @@ Stripe، فارم، GitHub → آپ کا API۔ WAL SQLite، دوبارہ کوش�
 
 ### کیا یہ اوپن سورس ہے؟
 
-نہیں۔ NexusCore تجارتی ہے۔ تاحیات لائسنس میں Whop پر چیک آؤٹ کے بعد مکمل سورس شامل ہے۔ یہ GitHub صرف دستاویزات ہے، سورس ٹری نہیں، اور یہ FOSS نہیں۔
+نہیں۔ NexusCore تجارتی ہے۔ تاحیات لائسنس میں Whop پر چیک آؤٹ کے بعد مکمل سورس شامل ہے۔ اس GitHub میں دستاویزات اور مفت ڈیمو ہے، لائسنس شدہ سورس ٹری نہیں، اور یہ FOSS نہیں۔
 
 ### کیا مجھے نیا VPS چاہیے؟
 
@@ -213,7 +224,7 @@ Stripe، فارم، GitHub → آپ کا API۔ WAL SQLite، دوبارہ کوش�
 
 ### کیا کچھ باہر رابطہ کرتا ہے؟
 
-`NEXUS_TELEMETRY=off` طے شدہ ہے۔ کوئی استعمال میٹر نہیں، کوئی تجزیاتی بیکن نہیں، کوئی وینڈر API نہیں۔
+سروسز استعمال کا ڈیٹا نہیں بھیجتیں۔ لائٹ نمونہ اس وقت تک خاموش رہتا ہے جب تک `NEXUS_TELEMETRY` سیٹ نہ ہو۔
 
 ### سیکرٹس اور لاگ کہاں رہتے ہیں؟
 
@@ -229,7 +240,7 @@ Stripe، فارم، GitHub → آپ کا API۔ WAL SQLite، دوبارہ کوش�
 
 ### کیا میں ایک ہی ٹول خرید سکتا ہوں؟
 
-ہاں۔ [API Proxy](https://nexuscore-store.whop.site) یا [NexusCron](https://nexuscore-store.whop.site) سے شروع کریں۔ [Ops Microservices](https://nexuscore-store.whop.site) بنڈل LogStream + EnvSync + API Proxy ہے، $199.99 میں۔
+ہاں۔ [API Proxy](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) یا [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron) سے شروع کریں۔ [Ops Microservices](https://nexuscore-store.whop.site) بنڈل LogStream + EnvSync + API Proxy ہے، $199.99 میں۔
 
 ---
 

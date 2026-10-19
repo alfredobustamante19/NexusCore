@@ -6,7 +6,7 @@
 
 > ভাষা: **বাংলা**
 
-এই GitHub পণ্যের ডকুমেন্টেশন। NexusCore বাণিজ্যিক। সোর্স, ইমেজ ও বাইনারি চেকআউটের পর [স্টোরে](https://nexuscore-store.whop.site) পাওয়া যায়। এই ট্রিতে শুধু README আছে।
+এই GitHub পণ্যের ডকুমেন্টেশন এবং বিনামূল্যের ডেমো। NexusCore বাণিজ্যিক। লাইসেন্স করা সোর্স চেকআউটের পর [স্টোরে](https://nexuscore-store.whop.site) পাওয়া যায়।
 
 **স্ট্যাক ভাড়া নেওয়া বন্ধ করুন। স্ব-হোস্টেড ডেভেলপার টুল যা আপনার নিজের।**
 
@@ -34,8 +34,8 @@ NexusCore সেই কাজ **আপনার** হোস্টে প্র�
 
 - একবার দিন। সোর্স রেখে দিন।
 - cron, webhook, পাইপলাইন ও অ্যাডমিনের জন্য FastAPI + SQLite + Docker।
-- LogStream, EnvSync ও API Proxy-এর জন্য একক-বাইনারি মাইক্রোসার্ভিস।
-- `NEXUS_TELEMETRY=off` ডিফল্ট। কিছুই বাইরে যোগাযোগ করে না।
+- LogStream, EnvSync ও API Proxy-এর জন্য Node.js প্রসেস।
+- সার্ভিসগুলো ব্যবহারের ডেটা পাঠায় না। `NEXUS_TELEMETRY` সেট না করা পর্যন্ত লাইট নমুনা চুপ থাকে।
 - Kubernetes নেই। হপের মাঝে কোনো ভেন্ডরের ইনবক্স নেই।
 
 **একটি লাইসেন্স নিন → [nexuscore-store.whop.site](https://nexuscore-store.whop.site)**
@@ -44,71 +44,80 @@ NexusCore সেই কাজ **আপনার** হোস্টে প্র�
 
 ## দ্রুত শুরু <a id="quick-start"></a>
 
-এই রিপো ক্লোন করে চলমান স্ট্যাক আশা করবেন না। চেকআউটের পর লাইসেন্স সোর্স, Docker ইমেজ ও বাইনারি হিসেবে আপনার সদস্য ফাইলে আসে। নিচের অংশগুলো তখন আপনি চালান।
+বিনামূল্যের ডেমো `NexusCore Developer Demo.zip`-এ (`./start-demo.sh`, Windows-এ `.\Start Demo.ps1`, কনসোল http://127.0.0.1:7400)। `pip install -r requirements.txt`-এর পর `nexuscore_lite.py` http://127.0.0.1:8000-এ শোনে। লাইসেন্স করা সোর্স চেকআউটের পর পাওয়া যায়। নিচের অংশগুলো তখন আপনি চালান।
 
 ### Compose-এর উদাহরণ (চেকআউটের পর)
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
 ```yaml
-# docker-compose.yml  — একটি নোড, প্রায় ৬০ সেকেন্ড
-# ইমেজ সদস্য ফাইলে আসে। এগুলো এই GitHub থেকে পাবলিক pull নয়।
+# NexusCron/docker-compose.yml — built from the licensed source, not pulled from this GitHub.
+# Webhook Router ships its own compose file and also binds host port 8000, so run it from its own folder.
 services:
-  nexuscron:
-    image: nexuscron:latest
+  scheduler:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8787:8787"
+      - "8000:8000"
     environment:
-      TZ: Europe/Madrid
-      NEXUSCRON_DATA: /data
-      NEXUS_TELEMETRY: "off"
+      DATABASE_PATH: /data/scheduler.db
+      SCHEDULER_TIMEZONE: UTC
     volumes:
-      - ./data/cron:/data
+      - pulse-data:/data
 
-  webhook-router:
-    image: webhook-router:latest
+volumes:
+  pulse-data:
+```
+
+```yaml
+# Webhook Router/docker-compose.yml
+services:
+  bridge:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8090:8090"
+      - "8000:8000"
     environment:
-      NEXUS_TELEMETRY: "off"
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?Set ADMIN_API_TOKEN}
+      DATABASE_URL: sqlite:////app/data/bridge.db
     volumes:
-      - ./data/webhooks:/var/lib/webhook-router
+      - bridge-data:/app/data
+
+volumes:
+  bridge-data:
 ```
 
 ### REST-এ একটি জব তৈরি
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
   -d '{
     "name": "invoice-reminders",
-    "cron": "0 8 * * 1-5",
-    "method": "POST",
-    "url": "https://billing.internal/jobs/remind",
-    "timeout_ms": 15000
+    "cron_expression": "0 8 * * 1-5",
+    "http_method": "POST",
+    "target_url": "https://billing.internal/jobs/remind"
   }'
 ```
 
-### একক-বাইনারি মাইক্রোসার্ভিস (Compose লাগে না)
+### Node.js প্রসেস (Compose লাগে না)
 
 ```bash
-./envsync-agent    # VPS, ল্যাপটপ ও সার্ভিসের মধ্যে এনক্রিপ্টেড .env সিঙ্ক
-./api-proxy        # পুনরায় চেষ্টা, রেট লিমিট, circuit breaker, ফলব্যাক
-./logstream        # HTTP + UDP ইনজেস্ট, SQLite, লাইভ ড্যাশবোর্ড
+npm start          # EnvSync, http://127.0.0.1:8787. VPS, ল্যাপটপ ও সার্ভিসের মধ্যে এনক্রিপ্টেড .env সিঙ্ক
+npm start          # API Proxy, http://127.0.0.1:8080. পুনরায় চেষ্টা, রেট লিমিট, circuit breaker, ফলব্যাক
+npm start          # LogStream, http://127.0.0.1:8787. Set PORT if 8787 is already taken. HTTP + UDP ইনজেস্ট, SQLite, লাইভ ড্যাশবোর্ড
 ```
 
-চেকআউটের পর কোনো অ্যাকাউন্ট বানাতে হয় না। localhost-এ বাঁধুন, আর `./data` বাকি মেশিনের সঙ্গে ব্যাকআপ রাখুন।
+EnvSync প্রথম বুটে অ্যাডমিন পাসওয়ার্ড চায় (`NEXUSENV_ADMIN_PASSWORD`)। LogStream `.env`-এ `NEXUS_TOKEN` আশা করে। localhost-এ বাঁধুন, আর ডেটা ডিরেক্টরি বাকি মেশিনের সঙ্গে ব্যাকআপ রাখুন।
 
 ---
 
 ## কীভাবে কাজ করে <a id="how-it-works"></a>
 
 1. প্রবেশ: Stripe, GitHub, ফর্ম, অথবা একটি cron টিক। সাধারণ HTTP আপনার হোস্ট করা এন্ডপয়েন্টে।
-2. আপনার VPS: Docker-এ FastAPI + SQLite, অথবা একটি বাইনারি। জব, সিক্রেট ও পেলোড আপনার মাউন্ট করা ডিস্কে থাকে।
+2. আপনার VPS: Docker-এ FastAPI + SQLite, অথবা একটি Node.js প্রসেস। জব, সিক্রেট ও পেলোড আপনার মাউন্ট করা ডিস্কে থাকে।
 3. আপনার নিজের গন্তব্য: আপনার API, Discord, একটি ফাইল। হপের মাঝে কোনো ভেন্ডরের ইনবক্স নেই।
 
 Webhook রাউটিং SQLite WAL-এ চলে, ৫০ এমবি RAM-এর নিচে, পুনরায় চেষ্টা ও dead-letter রিপ্লে সহ। EnvSync `.env` মানের জন্য একটি এনক্রিপ্টেড কী-ভ্যালু স্টোর রাখে। API Proxy পথে বসে, যাতে আপনার অ্যাপ রিট্রাই লুপ কপি না করে।
@@ -121,13 +130,13 @@ Cron-এর বিন্যাস ও EasyCron থেকে সরে আসা:
 
 | টুল | এটি কী প্রতিস্থাপন করে | রূপ | লাইসেন্স |
 |------|------------------|-------|---------|
-| [NexusCron](https://nexuscore-store.whop.site) | EasyCron, cron-job.org | FastAPI + SQLite + Docker | $94.99 আজীবন |
-| [Webhook Router](https://nexuscore-store.whop.site) | Hookdeck, Svix, Zapier রাউটিং | FastAPI + SQLite WAL + Docker | $94.99 আজীবন |
-| [NexusPipeline](https://nexuscore-store.whop.site) | ক্লাউড ওয়ার্কফ্লো / ওয়ার্কার SaaS | FastAPI + SQLModel + SQLite | $149.00 আজীবন |
-| [NexusAdmin](https://nexuscore-store.whop.site) | হোস্টেড অপস ড্যাশবোর্ড | Pipeline-এর পাশে Docker ড্যাশবোর্ড | $94.99 আজীবন |
-| [LogStream](https://nexuscore-store.whop.site) | অবজারভেবিলিটি SaaS | একক-বাইনারি Node.js, HTTP + UDP | $79.99 আজীবন |
-| [EnvSync Agent](https://nexuscore-store.whop.site) | Doppler / অতিরিক্ত সিক্রেট টেন্যান্ট | জিরো-ট্রাস্ট এজেন্ট, এনক্রিপ্টেড KV, REST | $99 আজীবন |
-| [API Proxy Service](https://nexuscore-store.whop.site) | পুনরায় চেষ্টার জন্য গেটওয়ে SaaS | একক বাইনারি: ব্যাকঅফ, সীমা, ব্রেকার | $99 আজীবন |
+| [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron) | EasyCron, cron-job.org | FastAPI + SQLite + Docker | $94.99 আজীবন |
+| [Webhook Router](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) | Hookdeck, Svix, Zapier রাউটিং | FastAPI + SQLite WAL + Docker | $94.99 আজীবন |
+| [NexusPipeline](https://nexuscore-store.whop.site/guides/self-hosted-pipeline) | ক্লাউড ওয়ার্কফ্লো / ওয়ার্কার SaaS | FastAPI + SQLModel + SQLite | $149.00 আজীবন |
+| [NexusAdmin](https://nexuscore-store.whop.site/guides/self-hosted-admin) | হোস্টেড অপস ড্যাশবোর্ড | Pipeline-এর পাশে Docker ড্যাশবোর্ড | $94.99 আজীবন |
+| [LogStream](https://nexuscore-store.whop.site/guides/self-hosted-logstream) | অবজারভেবিলিটি SaaS | Node.js প্রসেস, HTTP + UDP | $79.99 আজীবন |
+| [EnvSync Agent](https://nexuscore-store.whop.site/guides/self-hosted-envsync) | Doppler / অতিরিক্ত সিক্রেট টেন্যান্ট | জিরো-ট্রাস্ট এজেন্ট, এনক্রিপ্টেড KV, REST | $99 আজীবন |
+| [API Proxy Service](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) | পুনরায় চেষ্টার জন্য গেটওয়ে SaaS | Node.js প্রসেস: ব্যাকঅফ, সীমা, ব্রেকার | $99 আজীবন |
 
 ### বান্ডল
 
@@ -148,7 +157,7 @@ Cron-এর বিন্যাস ও EasyCron থেকে সরে আসা:
 | ডেটা | পেলোড, সময়সূচি ও লগ অন্যের ক্লাউডে | আপনার নিজের হোস্টে ডেটার পূর্ণ মালিকানা |
 | সেটআপ | অ্যাকাউন্ট, প্ল্যানের সীমা ও ভেন্ডর লক-ইন | একটি নোডে ৬০ সেকেন্ডের Docker সেটআপ |
 | কোড | বন্ধ SaaS, যা আপনি দেখতে বা ফর্ক করতে পারেন না | লাইসেন্সের সঙ্গে সম্পূর্ণ সোর্স কোড |
-| টেলিমেট্রি | ব্যবহারের মিটার | `NEXUS_TELEMETRY=off` |
+| টেলিমেট্রি | ব্যবহারের মিটার | কোনো ব্যবহার মিটার নেই |
 | ক্লাস্টার | তাদের মাল্টি-টেন্যান্ট প্লেন | একটি নোড। Kubernetes নেই |
 
 মাসে $20–$50-এর হোস্টেড cron প্রথম বছরে $240–$600। NexusCron একবার $94.99। VPS আগেই বাজেটে থাকলে নতুন খরচ শুধু লাইসেন্স।
@@ -160,9 +169,9 @@ Cron-এর বিন্যাস ও EasyCron থেকে সরে আসা:
 ### NexusCron। আপনার নিজের টাইমারে HTTP
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
-  -d '{"name":"health-ping","cron":"*/5 * * * *","method":"GET","url":"https://app.internal/health"}'
+  -d '{"name":"health-ping","cron_expression":"*/5 * * * *","http_method":"GET","target_url":"https://app.internal/health"}'
 ```
 
 [Cron সেটআপ](https://nexuscore-store.whop.site/guides/self-hosted-cron) · [EasyCron-এর বিকল্প](https://nexuscore-store.whop.site/guides/easycron-alternative) · [EasyCron থেকে সরে আসুন](https://nexuscore-store.whop.site/guides/migrate-off-easycron)
@@ -176,7 +185,8 @@ Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনর
 ### EnvSync। হাতে `.env` কপি করা বন্ধ করুন
 
 ```bash
-./envsync-agent
+npm start
+# http://127.0.0.1:8787
 ```
 
 1. সদস্য ফাইল থেকে এজেন্ট ডাউনলোড করুন।
@@ -188,7 +198,8 @@ Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনর
 ### API Proxy। পুনরায় চেষ্টা পথে থাকুক, প্রতিটি সার্ভিসে নয়
 
 ```bash
-./api-proxy
+npm start
+# http://127.0.0.1:8080
 ```
 
 সার্ভিসগুলোকে আপস্ট্রিমের বদলে প্রক্সিতে নির্দেশ করুন। পুনরায় চেষ্টা, রেট লিমিট ও ফলব্যাক সেট করুন। স্থানীয় ড্যাশবোর্ডে মেট্রিক নিশ্চিত করুন।
@@ -201,7 +212,7 @@ Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনর
 
 ### এটা কি ওপেন সোর্স?
 
-না। NexusCore বাণিজ্যিক। আজীবন লাইসেন্সে Whop-এ চেকআউটের পর সম্পূর্ণ সোর্স থাকে। এই GitHub শুধু ডকুমেন্টেশন, সোর্স ট্রি নয়, এবং এটা FOSS নয়।
+না। NexusCore বাণিজ্যিক। আজীবন লাইসেন্সে Whop-এ চেকআউটের পর সম্পূর্ণ সোর্স থাকে। এই GitHub-এ ডকুমেন্টেশন ও বিনামূল্যের ডেমো আছে, লাইসেন্স করা সোর্স ট্রি নয়, এবং এটা FOSS নয়।
 
 ### আমার কি নতুন VPS লাগবে?
 
@@ -213,7 +224,7 @@ Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনর
 
 ### কিছু কি বাইরে যোগাযোগ করে?
 
-`NEXUS_TELEMETRY=off` ডিফল্ট। কোনো ব্যবহার মিটার নেই, কোনো অ্যানালিটিক্স বিকন নেই, কোনো ভেন্ডর API নেই।
+সার্ভিসগুলো ব্যবহারের ডেটা পাঠায় না। `NEXUS_TELEMETRY` সেট না করা পর্যন্ত লাইট নমুনা চুপ থাকে।
 
 ### সিক্রেট ও লগ কোথায় থাকে?
 
@@ -229,7 +240,7 @@ Stripe, ফর্ম, GitHub → আপনার API। WAL SQLite, পুনর
 
 ### আমি কি একটি টুল কিনতে পারি?
 
-হ্যাঁ। [API Proxy](https://nexuscore-store.whop.site) বা [NexusCron](https://nexuscore-store.whop.site) দিয়ে শুরু করুন। [Ops Microservices](https://nexuscore-store.whop.site) বান্ডল হলো LogStream + EnvSync + API Proxy, দাম $199.99।
+হ্যাঁ। [API Proxy](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) বা [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron) দিয়ে শুরু করুন। [Ops Microservices](https://nexuscore-store.whop.site) বান্ডল হলো LogStream + EnvSync + API Proxy, দাম $199.99।
 
 ---
 

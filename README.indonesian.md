@@ -6,7 +6,7 @@
 
 > Bahasa: **Bahasa Indonesia**
 
-GitHub ini adalah dokumentasi produk. NexusCore bersifat komersial. Kode sumber, image, dan binary dikirim setelah checkout di [toko](https://nexuscore-store.whop.site). Pohon ini hanya berisi README.
+GitHub ini adalah dokumentasi produk dan demo gratis. NexusCore bersifat komersial. Kode berlisensi dikirim setelah checkout di [toko](https://nexuscore-store.whop.site).
 
 **Berhenti menyewa stack Anda. Alat pengembang yang dihosting sendiri dan menjadi milik Anda.**
 
@@ -34,8 +34,8 @@ NexusCore adalah pekerjaan itu sebagai proses di host **Anda**.
 
 - Bayar sekali. Simpan kode sumbernya.
 - FastAPI + SQLite + Docker untuk cron, webhook, pipeline, dan admin.
-- Layanan mikro biner tunggal untuk LogStream, EnvSync, dan API Proxy.
-- `NEXUS_TELEMETRY=off` adalah bawaan. Tidak ada yang menghubungi luar.
+- Proses Node.js untuk LogStream, EnvSync, dan API Proxy.
+- Layanan tidak mengirim data penggunaan. Sampel lite tetap diam kecuali `NEXUS_TELEMETRY` diatur.
 - Tanpa Kubernetes. Tanpa kotak masuk vendor di antara lompatan.
 
 **Dapatkan lisensi → [nexuscore-store.whop.site](https://nexuscore-store.whop.site)**
@@ -44,71 +44,80 @@ NexusCore adalah pekerjaan itu sebagai proses di host **Anda**.
 
 ## Mulai cepat <a id="quick-start"></a>
 
-Jangan mengkloning repo ini lalu mengharapkan stack yang sudah berjalan. Setelah checkout, lisensi tiba sebagai kode sumber, image Docker, dan binary di berkas anggota Anda. Cuplikan di bawah ini adalah yang Anda jalankan saat itu.
+Demo gratis ada di `NexusCore Developer Demo.zip` (`./start-demo.sh`, di Windows `.\Start Demo.ps1`, konsol di http://127.0.0.1:7400). `nexuscore_lite.py` mendengarkan di http://127.0.0.1:8000 setelah `pip install -r requirements.txt`. Kode berlisensi dikirim setelah checkout. Cuplikan di bawah ini adalah yang Anda jalankan saat itu.
 
 ### Contoh Compose (setelah checkout)
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
 ```yaml
-# docker-compose.yml  — satu node, ~60 d
-# Image dikirim di berkas anggota. Ini bukan pull publik dari GitHub ini.
+# NexusCron/docker-compose.yml — built from the licensed source, not pulled from this GitHub.
+# Webhook Router ships its own compose file and also binds host port 8000, so run it from its own folder.
 services:
-  nexuscron:
-    image: nexuscron:latest
+  scheduler:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8787:8787"
+      - "8000:8000"
     environment:
-      TZ: Europe/Madrid
-      NEXUSCRON_DATA: /data
-      NEXUS_TELEMETRY: "off"
+      DATABASE_PATH: /data/scheduler.db
+      SCHEDULER_TIMEZONE: UTC
     volumes:
-      - ./data/cron:/data
+      - pulse-data:/data
 
-  webhook-router:
-    image: webhook-router:latest
+volumes:
+  pulse-data:
+```
+
+```yaml
+# Webhook Router/docker-compose.yml
+services:
+  bridge:
+    build: .
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8090:8090"
+      - "8000:8000"
     environment:
-      NEXUS_TELEMETRY: "off"
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?Set ADMIN_API_TOKEN}
+      DATABASE_URL: sqlite:////app/data/bridge.db
     volumes:
-      - ./data/webhooks:/var/lib/webhook-router
+      - bridge-data:/app/data
+
+volumes:
+  bridge-data:
 ```
 
 ### Membuat job lewat REST
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
   -d '{
     "name": "invoice-reminders",
-    "cron": "0 8 * * 1-5",
-    "method": "POST",
-    "url": "https://billing.internal/jobs/remind",
-    "timeout_ms": 15000
+    "cron_expression": "0 8 * * 1-5",
+    "http_method": "POST",
+    "target_url": "https://billing.internal/jobs/remind"
   }'
 ```
 
-### Layanan mikro biner tunggal (Compose tidak wajib)
+### Proses Node.js (Compose tidak wajib)
 
 ```bash
-./envsync-agent    # sinkronisasi .env terenkripsi lintas VPS, laptop, dan layanan
-./api-proxy        # percobaan ulang, batas laju, circuit breaker, fallback
-./logstream        # ingest HTTP + UDP, SQLite, dasbor langsung
+npm start          # EnvSync, http://127.0.0.1:8787. sinkronisasi .env terenkripsi lintas VPS, laptop, dan layanan
+npm start          # API Proxy, http://127.0.0.1:8080. percobaan ulang, batas laju, circuit breaker, fallback
+npm start          # LogStream, http://127.0.0.1:8787. Set PORT if 8787 is already taken. ingest HTTP + UDP, SQLite, dasbor langsung
 ```
 
-Tidak ada akun yang perlu dibuat setelah checkout. Ikat ke localhost, dan cadangkan `./data` bersama sisa mesin.
+EnvSync meminta kata sandi admin saat pertama kali jalan (`NEXUSENV_ADMIN_PASSWORD`). LogStream mengharapkan `NEXUS_TOKEN` di `.env`. Ikat ke localhost, dan cadangkan direktori data bersama sisa mesin.
 
 ---
 
 ## Cara kerja <a id="how-it-works"></a>
 
 1. Masuk: Stripe, GitHub, formulir, atau tick cron. HTTP biasa ke endpoint yang Anda host.
-2. VPS Anda: FastAPI + SQLite di Docker, atau satu binary. Job, rahasia, dan payload tetap di disk yang Anda mount.
+2. VPS Anda: FastAPI + SQLite di Docker, atau satu proses Node.js. Job, rahasia, dan payload tetap di disk yang Anda mount.
 3. Tujuan yang Anda miliki: API Anda, Discord, sebuah berkas. Tidak ada kotak masuk vendor di antara lompatan.
 
 Perutean webhook berjalan di SQLite WAL, di bawah 50 MB RAM, dengan percobaan ulang dan pemutaran ulang dead-letter. EnvSync menyimpan penyimpanan kunci-nilai terenkripsi untuk nilai `.env`. API Proxy berada di jalur agar aplikasi Anda tidak menyalin loop percobaan ulang.
@@ -121,13 +130,13 @@ Tata letak cron dan perpindahan dari EasyCron: [arsitektur self-hosted](https://
 
 | Alat | Yang digantikan | Bentuk | Lisensi |
 |------|------------------|-------|---------|
-| [NexusCron](https://nexuscore-store.whop.site) | EasyCron, cron-job.org | FastAPI + SQLite + Docker | $94.99 seumur hidup |
-| [Webhook Router](https://nexuscore-store.whop.site) | Hookdeck, Svix, perutean Zapier | FastAPI + SQLite WAL + Docker | $94.99 seumur hidup |
-| [NexusPipeline](https://nexuscore-store.whop.site) | SaaS alur kerja / worker cloud | FastAPI + SQLModel + SQLite | $149.00 seumur hidup |
-| [NexusAdmin](https://nexuscore-store.whop.site) | Dasbor operasi yang dihosting | Dasbor Docker di samping Pipeline | $94.99 seumur hidup |
-| [LogStream](https://nexuscore-store.whop.site) | SaaS observabilitas | Node.js biner tunggal, HTTP + UDP | $79.99 seumur hidup |
-| [EnvSync Agent](https://nexuscore-store.whop.site) | Doppler / tenant rahasia tambahan | Agen zero-trust, KV terenkripsi, REST | $99 seumur hidup |
-| [API Proxy Service](https://nexuscore-store.whop.site) | SaaS gateway untuk percobaan ulang | Biner tunggal: backoff, batas, breaker | $99 seumur hidup |
+| [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron) | EasyCron, cron-job.org | FastAPI + SQLite + Docker | $94.99 seumur hidup |
+| [Webhook Router](https://nexuscore-store.whop.site/guides/self-hosted-webhook-router) | Hookdeck, Svix, perutean Zapier | FastAPI + SQLite WAL + Docker | $94.99 seumur hidup |
+| [NexusPipeline](https://nexuscore-store.whop.site/guides/self-hosted-pipeline) | SaaS alur kerja / worker cloud | FastAPI + SQLModel + SQLite | $149.00 seumur hidup |
+| [NexusAdmin](https://nexuscore-store.whop.site/guides/self-hosted-admin) | Dasbor operasi yang dihosting | Dasbor Docker di samping Pipeline | $94.99 seumur hidup |
+| [LogStream](https://nexuscore-store.whop.site/guides/self-hosted-logstream) | SaaS observabilitas | Proses Node.js, HTTP + UDP | $79.99 seumur hidup |
+| [EnvSync Agent](https://nexuscore-store.whop.site/guides/self-hosted-envsync) | Doppler / tenant rahasia tambahan | Agen zero-trust, KV terenkripsi, REST | $99 seumur hidup |
+| [API Proxy Service](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) | SaaS gateway untuk percobaan ulang | Proses Node.js: backoff, batas, breaker | $99 seumur hidup |
 
 ### Bundel
 
@@ -148,7 +157,7 @@ Kode peluncuran `DEVLAUNCH` memberi diskon 20% untuk setiap lisensi, termasuk bu
 | Data | Payload, jadwal, dan log berada di cloud orang lain | Kepemilikan data penuh di host Anda sendiri |
 | Penyiapan | Pendaftaran akun, batas paket, dan ketergantungan vendor | Penyiapan Docker 60 detik di satu node |
 | Kode | SaaS tertutup yang tidak bisa Anda periksa atau fork | Kode sumber lengkap bersama lisensi |
-| Telemetri | Meter penggunaan | `NEXUS_TELEMETRY=off` |
+| Telemetri | Meter penggunaan | Tidak ada meter penggunaan |
 | Kluster | Bidang multi-tenant mereka | Satu node. Tanpa Kubernetes |
 
 Cron yang dihosting seharga $20–$50 per bulan menjadi $240–$600 di tahun pertama. NexusCron $94.99 sekali. Jika VPS sudah ada dalam anggaran, satu-satunya biaya baru adalah lisensi.
@@ -160,9 +169,9 @@ Cron yang dihosting seharga $20–$50 per bulan menjadi $240–$600 di tahun per
 ### NexusCron. HTTP pada pengatur waktu yang Anda miliki
 
 ```bash
-curl -sS -X POST http://127.0.0.1:8787/api/jobs \
+curl -sS -X POST http://127.0.0.1:8000/api/tasks \
   -H "content-type: application/json" \
-  -d '{"name":"health-ping","cron":"*/5 * * * *","method":"GET","url":"https://app.internal/health"}'
+  -d '{"name":"health-ping","cron_expression":"*/5 * * * *","http_method":"GET","target_url":"https://app.internal/health"}'
 ```
 
 [Penyiapan cron](https://nexuscore-store.whop.site/guides/self-hosted-cron) · [Alternatif EasyCron](https://nexuscore-store.whop.site/guides/easycron-alternative) · [Pindah dari EasyCron](https://nexuscore-store.whop.site/guides/migrate-off-easycron)
@@ -176,7 +185,8 @@ Stripe, formulir, GitHub → API Anda. SQLite WAL, percobaan ulang, pemutaran ul
 ### EnvSync. Berhenti menyalin `.env` dengan tangan
 
 ```bash
-./envsync-agent
+npm start
+# http://127.0.0.1:8787
 ```
 
 1. Unduh agen dari berkas anggota.
@@ -188,7 +198,8 @@ Stripe, formulir, GitHub → API Anda. SQLite WAL, percobaan ulang, pemutaran ul
 ### API Proxy. Percobaan ulang ada di jalur, bukan di setiap layanan
 
 ```bash
-./api-proxy
+npm start
+# http://127.0.0.1:8080
 ```
 
 Arahkan layanan Anda ke proxy, bukan ke upstream. Atur percobaan ulang, batas laju, dan fallback. Konfirmasi metrik di dasbor lokal.
@@ -201,7 +212,7 @@ Arahkan layanan Anda ke proxy, bukan ke upstream. Atur percobaan ulang, batas la
 
 ### Apakah ini sumber terbuka?
 
-Tidak. NexusCore bersifat komersial. Lisensi seumur hidup mencakup kode sumber lengkap setelah checkout di Whop. GitHub ini hanya dokumentasi, bukan pohon kode sumber, dan ini bukan FOSS.
+Tidak. NexusCore bersifat komersial. Lisensi seumur hidup mencakup kode sumber lengkap setelah checkout di Whop. GitHub ini berisi dokumentasi dan demo gratis, bukan pohon kode berlisensi, dan ini bukan FOSS.
 
 ### Apakah saya perlu VPS baru?
 
@@ -213,7 +224,7 @@ Tidak.
 
 ### Apakah ada yang menghubungi luar?
 
-`NEXUS_TELEMETRY=off` adalah bawaan. Tidak ada meter penggunaan, tidak ada beacon analitik, tidak ada API vendor.
+Layanan tidak mengirim data penggunaan. Sampel lite tetap diam kecuali `NEXUS_TELEMETRY` diatur.
 
 ### Di mana rahasia dan log berada?
 
@@ -229,7 +240,7 @@ Tidak. Ini adalah percobaan ulang, batas laju, circuit breaker, dan fallback di 
 
 ### Bisakah saya membeli satu alat saja?
 
-Ya. Mulai dari [API Proxy](https://nexuscore-store.whop.site) atau [NexusCron](https://nexuscore-store.whop.site). Bundel [Ops Microservices](https://nexuscore-store.whop.site) adalah LogStream + EnvSync + API Proxy seharga $199.99.
+Ya. Mulai dari [API Proxy](https://nexuscore-store.whop.site/guides/self-hosted-api-proxy) atau [NexusCron](https://nexuscore-store.whop.site/guides/self-hosted-cron). Bundel [Ops Microservices](https://nexuscore-store.whop.site) adalah LogStream + EnvSync + API Proxy seharga $199.99.
 
 ---
 
